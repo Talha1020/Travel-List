@@ -68,6 +68,9 @@ input {
   font-size: 1.8rem;
   cursor: pointer;
 }
+input {
+  cursor: text;
+}
 
 .add-form button {
   text-transform: uppercase;
