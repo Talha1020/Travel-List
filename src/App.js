@@ -1,20 +1,35 @@
 import { useState } from "react";
 
-const initialItems = [
-  { id: 1, description: "Passports", quantity: 2, packed: true },
-  { id: 2, description: "Socks", quantity: 12, packed: false },
-  { id: 3, description: "Passports", quantity: 2, packed: false },
-  { id: 4, description: "Socks", quantity: 12, packed: false },
-  { id: 5, description: "Passports", quantity: 2, packed: false },
-  { id: 6, description: "Socks", quantity: 12, packed: false },
-];
-
 export default function App() {
+  const [ItemsList, setItemsList] = useState([]);
+  function onAddItems(itemsCheckList) {
+    setItemsList((ItemsList) => [...ItemsList, itemsCheckList]);
+  }
+  function onDeleteItems(id) {
+    setItemsList(ItemsList.filter((items) => items.id !== id));
+  }
+
+  function strikePackedItems(id) {
+    setItemsList((ItemsList) =>
+      ItemsList.map(
+        (previousitems) =>
+          previousitems.id === id
+            ? { ...previousitems, packed: !previousitems.packed }
+            : previousitems
+        // To consider property which is after the packed items because it is the way to replace old items in the object/ update it
+      )
+    );
+  }
   return (
     <div className="app">
       <Logo />
-      <Form />
-      <PackingList />
+      <Form onAddItems={onAddItems} />
+      <PackingList
+        strikePackedItems={strikePackedItems}
+        setItemsList={setItemsList}
+        onDeleteItems={onDeleteItems}
+        ItemsList={ItemsList}
+      />
       <Stats />
     </div>
   );
@@ -23,9 +38,10 @@ export default function App() {
 function Logo() {
   return <h1>🌴 Far Away 💼</h1>;
 }
-function Form() {
+function Form({ onAddItems }) {
   const [description, setDescription] = useState("");
   const [quantity, setQuantity] = useState(1);
+
   // dont add the state variables here since they will render each time when state is changed. So use it in submit handler
   function HandlerSubmit(e) {
     e.preventDefault();
@@ -36,6 +52,7 @@ function Form() {
       packed: false,
       id: Date.now(),
     };
+    onAddItems(itemsCheckList);
     setDescription("");
     setQuantity(1);
   }
@@ -65,25 +82,33 @@ function Form() {
     </form>
   );
 }
-function PackingList() {
+function PackingList({ ItemsList, onDeleteItems, strikePackedItems }) {
   return (
     <div className="list">
       <ul>
-        {initialItems.map((items) => (
-          <Item items={items} />
+        {ItemsList.map((items) => (
+          <Item
+            onDeleteItems={onDeleteItems}
+            strikePackedItems={strikePackedItems}
+            items={items}
+          />
         ))}
       </ul>
     </div>
   );
 }
 
-function Item({ items }) {
+function Item({ items, onDeleteItems, strikePackedItems }) {
   return (
     <li key={items.id}>
+      <input
+        type="checkbox"
+        onChange={() => strikePackedItems(items.id)}
+      ></input>
       <span style={items.packed ? { textDecoration: "line-through" } : {}}>
         {items.quantity} {items.description}
       </span>
-      <button>❌</button>
+      <button onClick={() => onDeleteItems(items.id)}>❌</button>
     </li>
   );
 }

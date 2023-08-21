@@ -131,7 +131,8 @@ input {
 input[type="checkbox"] {
   height: 2rem;
   width: 2rem;
-  accent-color: #e5771f;
+  accent-color: #1fd8e5;
+  cursor: pointer;
 }
 
 .list li button {
