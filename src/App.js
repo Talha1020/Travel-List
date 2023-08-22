@@ -2,14 +2,14 @@ import { useState } from "react";
 
 export default function App() {
   const [ItemsList, setItemsList] = useState([]);
-  function onAddItems(itemsCheckList) {
+  function HandlerAddItems(itemsCheckList) {
     setItemsList((ItemsList) => [...ItemsList, itemsCheckList]);
   }
-  function onDeleteItems(id) {
+  function HandlerDeleteItems(id) {
     setItemsList(ItemsList.filter((items) => items.id !== id));
   }
 
-  function strikePackedItems(id) {
+  function HandlerPackedItems(id) {
     setItemsList((ItemsList) =>
       ItemsList.map(
         (previousitems) =>
@@ -20,17 +20,22 @@ export default function App() {
       )
     );
   }
+
+  function HandlerItemsList() {
+    setItemsList([]);
+  }
+
   return (
     <div className="app">
       <Logo />
-      <Form onAddItems={onAddItems} />
+      <Form onAddItems={HandlerAddItems} />
       <PackingList
-        strikePackedItems={strikePackedItems}
-        setItemsList={setItemsList}
-        onDeleteItems={onDeleteItems}
+        onPackedItems={HandlerPackedItems}
+        onClearList={HandlerItemsList}
+        onDeleteItems={HandlerDeleteItems}
         ItemsList={ItemsList}
       />
-      <Stats />
+      <Stats ItemsList={ItemsList} />
     </div>
   );
 }
@@ -82,28 +87,58 @@ function Form({ onAddItems }) {
     </form>
   );
 }
-function PackingList({ ItemsList, onDeleteItems, strikePackedItems }) {
+
+function PackingList({ ItemsList, onDeleteItems, onPackedItems, onClearList }) {
+  const [sortBy, setSortBy] = useState("input");
+  let NewItems;
+
+  if (sortBy === "input") NewItems = ItemsList;
+
+  if (sortBy === "description") {
+    NewItems = ItemsList.slice().sort((a, b) =>
+      a.description.localeCompare(b.description)
+    );
+  }
+
+  if (sortBy === "packed") {
+    NewItems = ItemsList.slice().sort(
+      (a, b) => Number(a.packed) - Number(b.packed)
+    );
+  }
+
   return (
     <div className="list">
       <ul>
-        {ItemsList.map((items) => (
+        {NewItems.map((items) => (
           <Item
+            key={items.id}
+            // key is very important to write. i mad a mistake here not to add key here but to list component.
+
             onDeleteItems={onDeleteItems}
-            strikePackedItems={strikePackedItems}
+            onPackedItems={onPackedItems}
             items={items}
           />
         ))}
       </ul>
+      <div className="actions">
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="input">Sort by input</option>
+          <option value="packed">Sort by packed status</option>
+          <option value="description">Sort by description</option>
+        </select>
+        <button onClick={() => onClearList()}>Clear List</button>
+      </div>
     </div>
   );
 }
 
-function Item({ items, onDeleteItems, strikePackedItems }) {
+function Item({ items, onDeleteItems, onPackedItems }) {
   return (
-    <li key={items.id}>
+    <li>
       <input
         type="checkbox"
-        onChange={() => strikePackedItems(items.id)}
+        value={items.packed}
+        onChange={() => onPackedItems(items.id)}
       ></input>
       <span style={items.packed ? { textDecoration: "line-through" } : {}}>
         {items.quantity} {items.description}
@@ -113,10 +148,27 @@ function Item({ items, onDeleteItems, strikePackedItems }) {
   );
 }
 
-function Stats() {
+function Stats({ ItemsList }) {
+  if (ItemsList.length === 0) {
+    return (
+      <footer className="stats">
+        <em>Start adding some items to your packing list 🚀</em>
+      </footer>
+    );
+  }
+  const numItems = ItemsList.length;
+
+  const ItemsPacked = ItemsList.filter((items) => items.packed).length;
+  const percentage = Math.round((ItemsPacked / numItems) * 100);
+
   return (
     <footer className="stats">
-      <em>💼 You have X items on your list, and you already packed X (X%)</em>
+      <em>
+        {percentage === 100
+          ? "You got everything! Ready to go ✈️"
+          : `💼 You have ${numItems} items on your list, and you already packed
+        ${ItemsPacked} (${percentage}%)`}
+      </em>
     </footer>
   );
 }
